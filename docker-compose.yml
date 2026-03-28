@@ -1,0 +1,111 @@
+# ==============================================================================
+# MAIL RELAY MODULE - DOCKER COMPOSE
+# ==============================================================================
+# Description: HTTP-to-SMTP mail relay for automated service notifications
+# Author: Matt Barham
+# Created: 2026-03-28
+# Version: 1.0.0
+# Host: Your Server
+# ==============================================================================
+# Component: module: mail-relay
+# Config Sources: base.env + .env.example + modules.yml overrides → .env (generated)
+# Security: non-root (UID:1000/GID:968), secrets via /run/secrets/, caps dropped
+# ==============================================================================
+# Container Images:
+#   See modules/mail-relay/.env.example for complete image paths and versions
+#   (MAIL_RELAY_IMAGE)
+# Documentation:
+#   - FastAPI: https://fastapi.tiangolo.com/
+#   - aiosmtplib: https://aiosmtplib.readthedocs.io/
+# Networks:
+#   - troxy (192.168.35.0/24) - main application network
+# Dependencies:
+#   - Hub: traefik (routing)
+#   - Module: protonmail (SMTP provider)
+# External Integrations:
+#   - [x] Traefik routing (chain-agent-api BasicAuth)
+#   - [x] SMTP relay via protonmail-bridge
+# ==============================================================================
+
+name: spoke-mail-relay
+
+############################ EXTENSIONS
+
+x-logging-small: &log_small
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "2"
+
+############################ NETWORKS
+
+networks:
+  troxy:
+    external: true
+
+############################# SECRETS
+
+secrets:
+  smtp_password:
+    file: ${SECRETS_DIR}/proton/proton_bridge_password
+
+############################# SERVICES
+
+services:
+  #======================================
+  # MAIL_RELAY - HTTP-to-SMTP bridge
+  #======================================
+  mail-relay:
+    <<: *log_small
+    image: ${MAIL_RELAY_IMAGE}
+    build:
+      context: ./mail_relay
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${PUID:-1000}
+        GROUP_ID: ${DGID:-968}
+    hostname: mail-relay
+    container_name: mail-relay
+    restart: on-failure
+    init: true
+
+    security_opt:
+      - no-new-privileges=true
+    mem_limit: 128M
+    cpus: 0.25
+    cap_drop:
+      - ALL
+    user: ${PUID:-1000}:${DGID:-968}
+
+    networks:
+      troxy:
+        ipv4_address: ${MAIL_RELAY_IP}
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${PORT:-8000}/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    environment:
+      - TZ=${TZ}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - MAIL_FROM_EMAIL=${MAIL_FROM_EMAIL}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - MAIL_RELAY_ALLOWED_RECIPIENTS=${MAIL_RELAY_ALLOWED_RECIPIENTS}
+      - PORT=${PORT:-8000}
+      - SMTP_PASSWORD_FILE=/run/secrets/smtp_password
+
+    volumes:
+      - ${LOCALTIME}:/etc/localtime:ro
+
+    tmpfs:
+      - /tmp/:rw,size=50m
+      - /run/:rw,size=25m
+
+    secrets:
+      - smtp_password

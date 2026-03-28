@@ -1,0 +1,28 @@
+# ==============================================================================
+# SERVICES_MAIL_RELAY - TRAEFIK MAIL RELAY SERVICES
+# ==============================================================================
+# Description: Load balancer service configurations for the mail relay
+# Author: Matt Barham
+# Created: 2026-03-28
+# Version: 1.0.0
+# ==============================================================================
+# Deployed by Spoke as: mod_mail_relay_services_mail_relay.yml
+# Dependencies:
+#   - Container services must be running and accessible
+#   - Docker networks: troxy (defined in compose files)
+# ==============================================================================
+
+http:
+  services:
+    #======================================================
+    #==================== MAIL RELAY =====================
+    #======================================================
+
+    mail-relay-svc:
+      loadBalancer:
+        servers:
+          - url: http://mail-relay:8000
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 10s

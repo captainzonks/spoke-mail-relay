@@ -1,0 +1,27 @@
+# ==============================================================================
+# ROUTERS_MAIL_RELAY - TRAEFIK MAIL RELAY ROUTING
+# ==============================================================================
+# Description: HTTP routing rules for the mail relay service
+# Author: Matt Barham
+# Created: 2026-03-28
+# Version: 1.0.0
+# ==============================================================================
+# Deployed by Spoke as: mod_mail_relay_routers_mail_relay.yml
+# Dependencies:
+#   - mod_mail_relay_services_mail_relay.yml (service definitions)
+#   - hub middlewares (chain-agent-api)
+#   - Environment variable: DOMAIN
+# ==============================================================================
+
+http:
+  routers:
+    #======================================================
+    #==================== MAIL RELAY =====================
+    #======================================================
+
+    mail-relay:
+      rule: Host(`relay.{{ env "DOMAIN" }}`)
+      entryPoints: "websecure"
+      priority: 100
+      middlewares: chain-agent-api@file
+      service: mail-relay-svc@file
