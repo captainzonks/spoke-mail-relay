@@ -27,7 +27,7 @@ RUN groupadd -g ${GROUP_ID} ${GROUPNAME} && \
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
-COPY src/ ./src/
+COPY src/ ./
 
 RUN chown -R ${USERNAME}:${GROUPNAME} /app
 USER ${USERNAME}:${GROUPNAME}
