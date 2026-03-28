@@ -1,0 +1,42 @@
+name: mail-relay
+version: "1.0.0"
+description: "HTTP-to-SMTP mail relay for automated service notifications"
+
+requires:
+  networks:
+    - name: troxy
+      required: true
+  hub_services:
+    - traefik
+
+env:
+  hub:
+    - TZ
+    - DOMAIN
+    - SPOKE_DIR
+    - SECRETS_DIR
+    - APPDATA_DIR
+    - PUID
+    - DGID
+    - LOCALTIME
+  module:
+    - MAIL_RELAY_IMAGE
+    - MAIL_RELAY_IP
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USERNAME
+    - MAIL_FROM_EMAIL
+    - MAIL_FROM_NAME
+    - MAIL_RELAY_ALLOWED_RECIPIENTS
+    - PORT
+
+secrets:
+  - name: smtp_password
+    path: proton/proton_bridge_password
+    required: true
+    description: "SMTP authentication password"
+
+health:
+  service: mail-relay
+  path: /health
+  port: 8000

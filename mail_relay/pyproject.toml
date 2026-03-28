@@ -1,0 +1,11 @@
+[project]
+name = "spoke-mail-relay"
+version = "1.0.0"
+description = "HTTP-to-SMTP mail relay for the Spoke platform"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "aiosmtplib>=3.0.0",
+    "pydantic[email]>=2.10.0",
+]
