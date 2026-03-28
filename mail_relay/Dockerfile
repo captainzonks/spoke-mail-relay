@@ -11,8 +11,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 COPY pyproject.toml .
-RUN uv pip install --system --no-cache --compile-bytecode \
-    -r <(uv pip compile pyproject.toml --quiet)
+RUN uv pip compile pyproject.toml --quiet > requirements.txt && \
+    uv pip install --system --no-cache --compile-bytecode -r requirements.txt
 
 FROM python:3.13-slim
 
