@@ -2,6 +2,9 @@
 
 import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -11,66 +14,83 @@ from pydantic import BaseModel, EmailStr
 
 logger = logging.getLogger("mail_relay")
 
+
+# ---------------------------------------------------------------------------
+# Configuration (loaded once at startup)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Config:
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str
+    mail_from_email: str
+    mail_from_name: str
+    allowed_recipients: frozenset[str]
+
+
+def _load_config() -> Config:
+    password_file = os.environ.get("SMTP_PASSWORD_FILE", "")
+    if not password_file:
+        raise RuntimeError("SMTP_PASSWORD_FILE is required")
+    password_path = Path(password_file)
+    if not password_path.is_file():
+        raise RuntimeError(f"SMTP_PASSWORD_FILE not found: {password_file}")
+
+    smtp_host = os.environ.get("SMTP_HOST", "")
+    smtp_username = os.environ.get("SMTP_USERNAME", "")
+    mail_from_email = os.environ.get("MAIL_FROM_EMAIL", "")
+
+    if not smtp_host:
+        raise RuntimeError("SMTP_HOST is required")
+    if not smtp_username:
+        raise RuntimeError("SMTP_USERNAME is required")
+    if not mail_from_email:
+        raise RuntimeError("MAIL_FROM_EMAIL is required")
+
+    recipients_raw = os.environ.get("MAIL_RELAY_ALLOWED_RECIPIENTS", "")
+    if not recipients_raw:
+        raise RuntimeError("MAIL_RELAY_ALLOWED_RECIPIENTS is required")
+    allowed = frozenset(r.strip().lower() for r in recipients_raw.split(",") if r.strip())
+
+    return Config(
+        smtp_host=smtp_host,
+        smtp_port=int(os.environ.get("SMTP_PORT", "587")),
+        smtp_username=smtp_username,
+        smtp_password=password_path.read_text().strip(),
+        mail_from_email=mail_from_email,
+        mail_from_name=os.environ.get("MAIL_FROM_NAME", "Spoke Mail Relay"),
+        allowed_recipients=allowed,
+    )
+
+
+_config: Config | None = None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    global _config
+    _config = _load_config()
+    logger.info(
+        "Mail relay configured: smtp=%s:%d, from=%s, allowed_recipients=%d",
+        _config.smtp_host,
+        _config.smtp_port,
+        _config.mail_from_email,
+        len(_config.allowed_recipients),
+    )
+    yield
+
+
 app = FastAPI(
     title="Spoke Mail Relay",
     description="HTTP-to-SMTP mail relay for automated service notifications",
     version="1.0.0",
     docs_url=None,
     redoc_url=None,
+    lifespan=lifespan,
 )
-
-# ---------------------------------------------------------------------------
-# Configuration (loaded once at startup)
-# ---------------------------------------------------------------------------
-
-SMTP_HOST: str = ""
-SMTP_PORT: int = 587
-SMTP_USERNAME: str = ""
-SMTP_PASSWORD: str = ""
-MAIL_FROM_EMAIL: str = ""
-MAIL_FROM_NAME: str = ""
-ALLOWED_RECIPIENTS: set[str] = set()
-
-
-@app.on_event("startup")
-async def _load_config() -> None:
-    global SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD
-    global MAIL_FROM_EMAIL, MAIL_FROM_NAME, ALLOWED_RECIPIENTS
-
-    SMTP_HOST = os.environ.get("SMTP_HOST", "")
-    SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-    SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
-    MAIL_FROM_EMAIL = os.environ.get("MAIL_FROM_EMAIL", "")
-    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "Spoke Mail Relay")
-
-    password_file = os.environ.get("SMTP_PASSWORD_FILE", "")
-    if password_file:
-        password_path = Path(password_file)
-        if not password_path.is_file():
-            raise RuntimeError(f"SMTP_PASSWORD_FILE not found: {password_file}")
-        SMTP_PASSWORD = password_path.read_text().strip()
-    else:
-        raise RuntimeError("SMTP_PASSWORD_FILE is required")
-
-    recipients_raw = os.environ.get("MAIL_RELAY_ALLOWED_RECIPIENTS", "")
-    if not recipients_raw:
-        raise RuntimeError("MAIL_RELAY_ALLOWED_RECIPIENTS is required")
-    ALLOWED_RECIPIENTS = {r.strip().lower() for r in recipients_raw.split(",") if r.strip()}
-
-    if not SMTP_HOST:
-        raise RuntimeError("SMTP_HOST is required")
-    if not SMTP_USERNAME:
-        raise RuntimeError("SMTP_USERNAME is required")
-    if not MAIL_FROM_EMAIL:
-        raise RuntimeError("MAIL_FROM_EMAIL is required")
-
-    logger.info(
-        "Mail relay configured: smtp=%s:%d, from=%s, allowed_recipients=%d",
-        SMTP_HOST,
-        SMTP_PORT,
-        MAIL_FROM_EMAIL,
-        len(ALLOWED_RECIPIENTS),
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -106,15 +126,18 @@ async def health() -> HealthResponse:
 
 @app.post("/send", response_model=SendResponse)
 async def send_email(req: SendRequest) -> SendResponse:
+    if _config is None:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+
     recipient = req.to.lower()
-    if recipient not in ALLOWED_RECIPIENTS:
+    if recipient not in _config.allowed_recipients:
         raise HTTPException(
             status_code=403,
             detail=f"Recipient not in allowlist: {req.to}",
         )
 
     msg = EmailMessage()
-    msg["From"] = f"{MAIL_FROM_NAME} <{MAIL_FROM_EMAIL}>"
+    msg["From"] = f"{_config.mail_from_name} <{_config.mail_from_email}>"
     msg["To"] = req.to
     msg["Subject"] = req.subject
     msg.set_content(req.body_text)
@@ -125,10 +148,10 @@ async def send_email(req: SendRequest) -> SendResponse:
     try:
         await aiosmtplib.send(
             msg,
-            hostname=SMTP_HOST,
-            port=SMTP_PORT,
-            username=SMTP_USERNAME,
-            password=SMTP_PASSWORD,
+            hostname=_config.smtp_host,
+            port=_config.smtp_port,
+            username=_config.smtp_username,
+            password=_config.smtp_password,
             use_tls=False,
             start_tls=False,
         )
