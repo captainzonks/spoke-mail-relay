@@ -11,8 +11,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 COPY pyproject.toml .
-RUN uv pip install --system --no-cache --compile-bytecode \
-    -r <(uv pip compile pyproject.toml --quiet)
+RUN uv pip compile pyproject.toml --quiet > requirements.txt && \
+    uv pip install --system --no-cache --compile-bytecode -r requirements.txt
 
 FROM python:3.13-slim
 
@@ -27,7 +27,7 @@ RUN groupadd -g ${GROUP_ID} ${GROUPNAME} && \
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
-COPY src/ ./src/
+COPY src/ ./
 
 RUN chown -R ${USERNAME}:${GROUPNAME} /app
 USER ${USERNAME}:${GROUPNAME}
