@@ -1,11 +1,15 @@
 # ==============================================================================
-# ROUTERS_MAIL_RELAY - TRAEFIK MAIL RELAY ROUTING
+# MAIL-RELAY MODULE - TRAEFIK ROUTERS
 # ==============================================================================
 # Description: HTTP routing rules for the mail relay service
 # Author: Matt Barham
 # Created: 2026-03-28
-# Version: 1.0.0
+# Modified: 2026-04-22
+# Version: 1.0.1
+# Host: Your Server
 # ==============================================================================
+# Type: Traefik Dynamic Config (routers)
+# Component: module: mail-relay
 # Deployed by Spoke as: mod_mail_relay_routers_mail_relay.yml
 # Dependencies:
 #   - mod_mail_relay_services_mail_relay.yml (service definitions)

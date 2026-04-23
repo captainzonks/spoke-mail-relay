@@ -1,5 +1,21 @@
 # spoke-mail-relay
 
+<!--
+==============================================================================
+README.md - spoke-mail-relay module documentation
+==============================================================================
+Description: HTTP-to-SMTP mail relay (FastAPI) Spoke module
+Author: Matt Barham
+Created: 2026-03-28
+Modified: 2026-04-22
+Version: 1.0.1
+==============================================================================
+Document Type: Reference
+Audience: Developer
+Status: Final
+==============================================================================
+-->
+
 Spoke module for an HTTP-to-SMTP mail relay — a lightweight [FastAPI](https://fastapi.tiangolo.com/) service that lets automated agents send email through any SMTP provider.
 
 ## Services

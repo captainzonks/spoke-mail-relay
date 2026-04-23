@@ -1,8 +1,17 @@
 # ==============================================================================
-# SPOKE MAIL RELAY - DOCKERFILE
+# MAIL-RELAY MODULE - MAIL-RELAY DOCKERFILE
 # ==============================================================================
-# Description: HTTP-to-SMTP mail relay service
-# Base: python:3.13-slim (multi-stage build)
+# Description: HTTP-to-SMTP mail relay service (FastAPI + uvicorn)
+# Author: Matt Barham
+# Created: 2026-03-28
+# Modified: 2026-04-22
+# Version: 1.0.1
+# Host: Your Server
+# ==============================================================================
+# Type: Dockerfile
+# Base Image: python:3.13-slim (multi-stage build)
+# Documentation: https://fastapi.tiangolo.com/
+# Component: module: mail-relay / service: mail-relay
 # ==============================================================================
 
 FROM python:3.13-slim AS builder

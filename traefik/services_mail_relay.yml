@@ -1,11 +1,15 @@
 # ==============================================================================
-# SERVICES_MAIL_RELAY - TRAEFIK MAIL RELAY SERVICES
+# MAIL-RELAY MODULE - TRAEFIK SERVICES
 # ==============================================================================
 # Description: Load balancer service configurations for the mail relay
 # Author: Matt Barham
 # Created: 2026-03-28
-# Version: 1.0.0
+# Modified: 2026-04-22
+# Version: 1.0.1
+# Host: Your Server
 # ==============================================================================
+# Type: Traefik Dynamic Config (services)
+# Component: module: mail-relay
 # Deployed by Spoke as: mod_mail_relay_services_mail_relay.yml
 # Dependencies:
 #   - Container services must be running and accessible

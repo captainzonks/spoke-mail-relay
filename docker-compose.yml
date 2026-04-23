@@ -1,10 +1,11 @@
 # ==============================================================================
-# MAIL RELAY MODULE - DOCKER COMPOSE
+# MAIL-RELAY MODULE - DOCKER COMPOSE
 # ==============================================================================
 # Description: HTTP-to-SMTP mail relay for automated service notifications
 # Author: Matt Barham
 # Created: 2026-03-28
-# Version: 1.0.0
+# Modified: 2026-04-22
+# Version: 1.0.1
 # Host: Your Server
 # ==============================================================================
 # Component: module: mail-relay
