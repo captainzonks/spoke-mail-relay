@@ -4,8 +4,8 @@
 # Description: HTTP-to-SMTP mail relay for automated service notifications
 # Author: Matt Barham
 # Created: 2026-03-28
-# Modified: 2026-04-22
-# Version: 1.0.1
+# Modified: 2026-09-25
+# Version: 1.0.2
 # Host: Your Server
 # ==============================================================================
 # Component: module: mail-relay
@@ -21,10 +21,9 @@
 # Networks:
 #   - troxy (192.168.35.0/24) - main application network
 # Dependencies:
-#   - Hub: traefik (routing)
 #   - Module: protonmail (SMTP provider)
 # External Integrations:
-#   - [x] Traefik routing (chain-agent-api BasicAuth)
+#   - [ ] Traefik routing (none: internal-only, reached on troxy)
 #   - [x] SMTP relay via protonmail-bridge
 # ==============================================================================
 

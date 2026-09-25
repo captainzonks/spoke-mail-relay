@@ -4,8 +4,8 @@
 # Description: Spoke module manifest for the HTTP-to-SMTP mail relay
 # Author: Matt Barham
 # Created: 2026-03-28
-# Modified: 2026-04-22
-# Version: 1.0.1
+# Modified: 2026-09-25
+# Version: 1.1.0
 # Host: Your Server
 # ==============================================================================
 # Type: Spoke Module Manifest
@@ -13,15 +13,13 @@
 # ==============================================================================
 
 name: mail-relay
-version: "1.0.1"
+version: "1.1.0"
 description: "HTTP-to-SMTP mail relay for automated service notifications"
 
 requires:
   networks:
     - name: troxy
       required: true
-  hub_services:
-    - traefik
 
 env:
   hub:
