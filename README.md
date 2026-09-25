@@ -27,7 +27,6 @@ Spoke module for an HTTP-to-SMTP mail relay — a lightweight [FastAPI](https://
 ## Prerequisites
 
 - Spoke hub deployed with `troxy` network
-- Traefik available as a hub service (with `chain-agent-api` middleware for BasicAuth)
 - An SMTP provider accessible from the Docker network (e.g., [spoke-protonmail](https://github.com/captainzonks/spoke-protonmail))
 - `smtp_password` secret created
 
@@ -49,7 +48,9 @@ docker compose up -d
 
 ## API
 
-All endpoints are behind Traefik BasicAuth (`chain-agent-api` middleware).
+The relay is internal-only: it has no Traefik route and is reachable only from
+containers on the `troxy` network at `http://mail-relay:8000`. Callers that need
+to send mail (e.g. spoke-triage) must run on the host or inside the Docker network.
 
 ### `POST /send`
 
@@ -96,7 +97,7 @@ Returns `{"status": "ok"}` when the service is running.
 ## Security
 
 - **Recipient allowlist**: Only addresses in `MAIL_RELAY_ALLOWED_RECIPIENTS` can receive email (open relay prevention)
-- **BasicAuth**: Traefik `chain-agent-api` middleware gates all HTTP access
+- **No public route**: not exposed through Traefik; only reachable on the internal `troxy` network
 - **Docker secrets**: SMTP password loaded from `/run/secrets/`, never in environment variables
 - **Non-root**: Runs as UID 1000 / GID 968 with all capabilities dropped
 - **Resource limits**: 128MB memory, 0.25 CPU
@@ -104,13 +105,9 @@ Returns `{"status": "ok"}` when the service is running.
 ## Architecture
 
 ```
-Automated Agent (Claude, cron, etc.)
+Internal caller on troxy (spoke-triage, host scripts, etc.)
     |
-    | HTTPS POST /send (BasicAuth)
-    v
-[Traefik] → chain-agent-api middleware
-    |
-    | HTTP :8000
+    | HTTP POST http://mail-relay:8000/send
     v
 [mail-relay container]
     |
