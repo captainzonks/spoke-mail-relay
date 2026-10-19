@@ -1,6 +1,6 @@
 [project]
 name = "spoke-mail-relay"
-version = "1.0.0"
+version = "1.0.1"
 description = "HTTP-to-SMTP mail relay for the Spoke platform"
 requires-python = ">=3.12"
 dependencies = [
