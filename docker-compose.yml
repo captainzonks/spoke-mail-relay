@@ -10,7 +10,7 @@
 # ==============================================================================
 # Component: module: mail-relay
 # Config Sources: base.env + .env.example + modules.yml overrides → .env (generated)
-# Security: non-root (UID:1000/GID:968), secrets via /run/secrets/, caps dropped
+# Security: non-root (PUID:DGID from base.env), secrets via /run/secrets/, caps dropped
 # ==============================================================================
 # Container Images:
 #   See modules/mail-relay/.env.example for complete image paths and versions
@@ -63,8 +63,8 @@ services:
       context: ./mail_relay
       dockerfile: Dockerfile
       args:
-        USER_ID: ${PUID:-1000}
-        GROUP_ID: ${DGID:-968}
+        USER_ID: ${PUID}
+        GROUP_ID: ${DGID}
     hostname: mail-relay
     container_name: mail-relay
     restart: on-failure
@@ -76,7 +76,7 @@ services:
     cpus: 0.25
     cap_drop:
       - ALL
-    user: ${PUID:-1000}:${DGID:-968}
+    user: ${PUID}:${DGID}
 
     networks:
       troxy:

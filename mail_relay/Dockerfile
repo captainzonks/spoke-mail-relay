@@ -25,12 +25,14 @@ RUN uv pip compile pyproject.toml --quiet > requirements.txt && \
 
 FROM python:3.13-slim
 
-ARG USER_ID=1000
-ARG GROUP_ID=968
+ARG USER_ID
+ARG GROUP_ID
 ARG USERNAME=appuser
 ARG GROUPNAME=appgroup
 
-RUN groupadd -g ${GROUP_ID} ${GROUPNAME} && \
+RUN test -n "${USER_ID}" && test -n "${GROUP_ID}" || \
+    { echo "USER_ID and GROUP_ID build args are required (PUID/DGID from base.env)" >&2; exit 1; } && \
+    groupadd -g ${GROUP_ID} ${GROUPNAME} && \
     useradd -u ${USER_ID} -g ${GROUPNAME} -s /bin/false -M ${USERNAME}
 
 WORKDIR /app

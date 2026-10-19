@@ -99,7 +99,7 @@ Returns `{"status": "ok"}` when the service is running.
 - **Recipient allowlist**: Only addresses in `MAIL_RELAY_ALLOWED_RECIPIENTS` can receive email (open relay prevention)
 - **No public route**: not exposed through Traefik; only reachable on the internal `troxy` network
 - **Docker secrets**: SMTP password loaded from `/run/secrets/`, never in environment variables
-- **Non-root**: Runs as UID 1000 / GID 968 with all capabilities dropped
+- **Non-root**: Runs as `PUID:DGID` (set in `base.env`; `DGID` is your host's `docker` group GID) with all capabilities dropped
 - **Resource limits**: 128MB memory, 0.25 CPU
 
 ## Architecture
